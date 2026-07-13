@@ -125,18 +125,18 @@ export async function parseAlcostoFile(file: File): Promise<ParsedFile> {
     const marca = String(getVal("marca") ?? "").trim();
     if (!codigo && !partNumber && !descripcion) continue;
 
-    const imgEntry = imgByRow.get(r) as (ExcelJS.Image & { __buffer?: ArrayBuffer }) | undefined;
+    const imgEntry = imgByRow.get(r);
     let imageBase64: string | undefined;
     let imageHash: string | undefined;
-    if (imgEntry?.__buffer) {
-      const buf = imgEntry.__buffer;
+    if (imgEntry?.buffer) {
+      const buf = imgEntry.buffer;
       imageHash = await sha1(buf);
-      // convert to base64
       const bytes = new Uint8Array(buf);
       let binary = "";
       for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
       imageBase64 = btoa(binary);
     }
+
 
     rows.push({
       codigo,
