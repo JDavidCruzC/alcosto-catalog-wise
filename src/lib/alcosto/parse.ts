@@ -94,19 +94,17 @@ export async function parseAlcostoFile(file: File): Promise<ParsedFile> {
 
   // Extract images per row (brand column). exceljs images have range.tl.nativeRow (0-indexed)
   const images = ws.getImages();
-  const imgByRow = new Map<number, ExcelJS.Image>();
+  const imgByRow = new Map<number, { buffer: ArrayBuffer }>();
+  const mediaList = (wb.model as unknown as { media: Array<{ index?: number; buffer: ArrayBuffer }> }).media ?? [];
   for (const img of images) {
-    const nativeRow = img.range.tl.nativeRow; // 0-indexed
+    const nativeRow = img.range.tl.nativeRow;
     const excelRow = nativeRow + 1;
-    if (!imgByRow.has(excelRow)) {
-      const media = wb.model.media.find((m) => m.index === img.imageId);
-      if (media) {
-        imgByRow.set(excelRow, { ...img, __buffer: media.buffer } as ExcelJS.Image & {
-          __buffer: ArrayBuffer;
-        });
-      }
-    }
+    if (imgByRow.has(excelRow)) continue;
+    const imageIdNum = Number(img.imageId);
+    const media = mediaList.find((m) => m.index === imageIdNum) ?? mediaList[imageIdNum];
+    if (media?.buffer) imgByRow.set(excelRow, { buffer: media.buffer });
   }
+
 
   const rows: ParsedRow[] = [];
   const total = ws.rowCount;
