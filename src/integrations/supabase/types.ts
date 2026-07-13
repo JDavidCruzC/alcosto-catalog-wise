@@ -14,7 +14,143 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      comparaciones: {
+        Row: {
+          agregados: number
+          cambios_condicion: number
+          cambios_precio: number
+          created_at: string
+          eliminados: number
+          fecha_base: string | null
+          fecha_nueva: string | null
+          id: string
+          ms_procesamiento: number
+          nombre_archivo_base: string | null
+          nombre_archivo_generado: string
+          nombre_archivo_nuevo: string | null
+          nuevos: number
+          refurbished: number
+          total_curr: number
+          total_prev: number
+        }
+        Insert: {
+          agregados?: number
+          cambios_condicion?: number
+          cambios_precio?: number
+          created_at?: string
+          eliminados?: number
+          fecha_base?: string | null
+          fecha_nueva?: string | null
+          id?: string
+          ms_procesamiento?: number
+          nombre_archivo_base?: string | null
+          nombre_archivo_generado: string
+          nombre_archivo_nuevo?: string | null
+          nuevos?: number
+          refurbished?: number
+          total_curr?: number
+          total_prev?: number
+        }
+        Update: {
+          agregados?: number
+          cambios_condicion?: number
+          cambios_precio?: number
+          created_at?: string
+          eliminados?: number
+          fecha_base?: string | null
+          fecha_nueva?: string | null
+          id?: string
+          ms_procesamiento?: number
+          nombre_archivo_base?: string | null
+          nombre_archivo_generado?: string
+          nombre_archivo_nuevo?: string | null
+          nuevos?: number
+          refurbished?: number
+          total_curr?: number
+          total_prev?: number
+        }
+        Relationships: []
+      }
+      marcas_cache: {
+        Row: {
+          created_at: string
+          image_hash: string
+          marca: string
+        }
+        Insert: {
+          created_at?: string
+          image_hash: string
+          marca: string
+        }
+        Update: {
+          created_at?: string
+          image_hash?: string
+          marca?: string
+        }
+        Relationships: []
+      }
+      productos_comparacion: {
+        Row: {
+          codigo: string | null
+          comparacion_id: string
+          condicion_curr: string | null
+          condicion_prev: string | null
+          descripcion: string | null
+          diferencia: number | null
+          estado: string
+          id: number
+          marca: string | null
+          observacion: string | null
+          orden: number
+          part_number: string | null
+          precio_curr: number | null
+          precio_prev: number | null
+          variacion_pct: number | null
+        }
+        Insert: {
+          codigo?: string | null
+          comparacion_id: string
+          condicion_curr?: string | null
+          condicion_prev?: string | null
+          descripcion?: string | null
+          diferencia?: number | null
+          estado: string
+          id?: number
+          marca?: string | null
+          observacion?: string | null
+          orden?: number
+          part_number?: string | null
+          precio_curr?: number | null
+          precio_prev?: number | null
+          variacion_pct?: number | null
+        }
+        Update: {
+          codigo?: string | null
+          comparacion_id?: string
+          condicion_curr?: string | null
+          condicion_prev?: string | null
+          descripcion?: string | null
+          diferencia?: number | null
+          estado?: string
+          id?: number
+          marca?: string | null
+          observacion?: string | null
+          orden?: number
+          part_number?: string | null
+          precio_curr?: number | null
+          precio_prev?: number | null
+          variacion_pct?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "productos_comparacion_comparacion_id_fkey"
+            columns: ["comparacion_id"]
+            isOneToOne: false
+            referencedRelation: "comparaciones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
