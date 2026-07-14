@@ -197,6 +197,19 @@ function HistorialPage() {
                       <Button
                         size="sm"
                         variant="ghost"
+                        title="Visualizar"
+                        onClick={() => handleView(c.id)}
+                      >
+                        {viewingId === c.id && !viewResult ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Eye className="h-4 w-4 text-primary" />
+                        )}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        title="Descargar"
                         disabled={downloadingId === c.id}
                         onClick={() => handleDownload(c.id)}
                       >
