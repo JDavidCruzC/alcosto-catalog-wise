@@ -2,12 +2,18 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
-import { Download, Loader2, Search, Trash2, History as HistoryIcon } from "lucide-react";
+import { Download, Eye, Loader2, Search, Trash2, History as HistoryIcon } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,6 +25,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { ComparisonPreview } from "@/components/ComparisonPreview";
 import { deleteComparacion, getComparacion, listComparaciones } from "@/lib/alcosto/db.functions";
 import { downloadExcel } from "@/lib/alcosto/generate";
 import type { ComparisonResult, ComparedRow, EstadoProducto, Condicion } from "@/lib/alcosto/types";
