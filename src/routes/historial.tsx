@@ -255,6 +255,33 @@ function HistorialPage() {
           </Table>
         </CardContent>
       </Card>
+
+      <Dialog
+        open={viewingId !== null}
+        onOpenChange={(o) => {
+          if (!o) {
+            setViewingId(null);
+            setViewResult(null);
+          }
+        }}
+      >
+        <DialogContent className="max-w-[95vw] sm:max-w-[95vw] h-[90vh] flex flex-col p-0 gap-0">
+          <DialogHeader className="border-b border-border p-4">
+            <DialogTitle className="text-base">
+              {viewResult ? viewResult.outputFileName : "Cargando comparación…"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="min-h-0 flex-1 overflow-hidden p-4">
+            {viewResult ? (
+              <ComparisonPreview rows={viewResult.rows} />
+            ) : (
+              <div className="flex h-full items-center justify-center">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
