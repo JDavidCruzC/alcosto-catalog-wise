@@ -42,6 +42,8 @@ function HistorialPage() {
 
   const [q, setQ] = useState("");
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [viewingId, setViewingId] = useState<string | null>(null);
+  const [viewResult, setViewResult] = useState<ComparisonResult | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["historial"],
