@@ -70,43 +70,47 @@ function HistorialPage() {
     );
   }, [data, q]);
 
+  const loadResult = async (id: string): Promise<ComparisonResult> => {
+    const { comp, rows } = await get({ data: { id } });
+    return {
+      fechaBase: comp.fecha_base ? new Date(comp.fecha_base) : null,
+      fechaNueva: comp.fecha_nueva ? new Date(comp.fecha_nueva) : null,
+      fileNameBase: comp.nombre_archivo_base ?? "",
+      fileNameNueva: comp.nombre_archivo_nuevo ?? "",
+      outputFileName: comp.nombre_archivo_generado,
+      totalPrev: comp.total_prev,
+      totalCurr: comp.total_curr,
+      agregados: comp.agregados,
+      eliminados: comp.eliminados,
+      cambiosPrecio: comp.cambios_precio,
+      cambiosCondicion: comp.cambios_condicion,
+      refurbished: comp.refurbished,
+      nuevos: comp.nuevos,
+      seMantiene:
+        comp.total_curr - comp.agregados - comp.cambios_precio - comp.cambios_condicion,
+      msProcesamiento: comp.ms_procesamiento,
+      rows: rows.map<ComparedRow>((r) => ({
+        codigo: r.codigo ?? "",
+        partNumber: r.part_number ?? "",
+        descripcion: r.descripcion ?? "",
+        marca: r.marca ?? "",
+        condicionPrev: (r.condicion_prev ?? "") as Condicion,
+        condicionCurr: (r.condicion_curr ?? "") as Condicion,
+        precioPrev: r.precio_prev == null ? null : Number(r.precio_prev),
+        precioCurr: r.precio_curr == null ? null : Number(r.precio_curr),
+        diferencia: r.diferencia == null ? null : Number(r.diferencia),
+        variacionPct: r.variacion_pct == null ? null : Number(r.variacion_pct),
+        estado: r.estado as EstadoProducto,
+        observacion: r.observacion ?? "",
+        orden: r.orden,
+      })),
+    };
+  };
+
   const handleDownload = async (id: string) => {
     setDownloadingId(id);
     try {
-      const { comp, rows } = await get({ data: { id } });
-      const result: ComparisonResult = {
-        fechaBase: comp.fecha_base ? new Date(comp.fecha_base) : null,
-        fechaNueva: comp.fecha_nueva ? new Date(comp.fecha_nueva) : null,
-        fileNameBase: comp.nombre_archivo_base ?? "",
-        fileNameNueva: comp.nombre_archivo_nuevo ?? "",
-        outputFileName: comp.nombre_archivo_generado,
-        totalPrev: comp.total_prev,
-        totalCurr: comp.total_curr,
-        agregados: comp.agregados,
-        eliminados: comp.eliminados,
-        cambiosPrecio: comp.cambios_precio,
-        cambiosCondicion: comp.cambios_condicion,
-        refurbished: comp.refurbished,
-        nuevos: comp.nuevos,
-        seMantiene:
-          comp.total_curr - comp.agregados - comp.cambios_precio - comp.cambios_condicion,
-        msProcesamiento: comp.ms_procesamiento,
-        rows: rows.map<ComparedRow>((r) => ({
-          codigo: r.codigo ?? "",
-          partNumber: r.part_number ?? "",
-          descripcion: r.descripcion ?? "",
-          marca: r.marca ?? "",
-          condicionPrev: (r.condicion_prev ?? "") as Condicion,
-          condicionCurr: (r.condicion_curr ?? "") as Condicion,
-          precioPrev: r.precio_prev == null ? null : Number(r.precio_prev),
-          precioCurr: r.precio_curr == null ? null : Number(r.precio_curr),
-          diferencia: r.diferencia == null ? null : Number(r.diferencia),
-          variacionPct: r.variacion_pct == null ? null : Number(r.variacion_pct),
-          estado: r.estado as EstadoProducto,
-          observacion: r.observacion ?? "",
-          orden: r.orden,
-        })),
-      };
+      const result = await loadResult(id);
       await downloadExcel(result);
     } catch (e) {
       toast.error("Error: " + (e as Error).message);
@@ -114,6 +118,19 @@ function HistorialPage() {
       setDownloadingId(null);
     }
   };
+
+  const handleView = async (id: string) => {
+    setViewingId(id);
+    setViewResult(null);
+    try {
+      const result = await loadResult(id);
+      setViewResult(result);
+    } catch (e) {
+      toast.error("Error: " + (e as Error).message);
+      setViewingId(null);
+    }
+  };
+
 
   return (
     <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-6 p-4 md:p-8">
