@@ -19,12 +19,12 @@ const BORDER: Partial<ExcelJS.Borders> = {
   right: { style: "thin", color: { argb: "FFD9D9D9" } },
 };
 
-const COLOR_MANTIENE = "FFDCFCE7"; // verde
-const COLOR_PRECIO = "FFFEF3C7"; // amarillo
-const COLOR_NUEVO = "FFDBEAFE"; // azul
-const COLOR_ELIMINADO = "FFFECACA"; // rojo
-const COLOR_CONDICION = "FFEDE9FE"; // morado
-const COLOR_REFURB = "FFF3F4F6"; // gris claro
+const COLOR_MANTIENE = "FFB7F0C4"; // verde intenso
+const COLOR_PRECIO = "FFFFE28A"; // amarillo intenso
+const COLOR_NUEVO = "FFA9CBFF"; // azul intenso
+const COLOR_ELIMINADO = "FFFFA8A8"; // rojo intenso
+const COLOR_CONDICION = "FFD8CBFF"; // morado
+const COLOR_REFURB = "FFE5E7EB"; // gris claro
 
 function colorForEstado(estado: string): string | undefined {
   switch (estado) {
@@ -67,35 +67,29 @@ function autoWidth(ws: ExcelJS.Worksheet) {
 function addUnificado(wb: ExcelJS.Workbook, res: ComparisonResult) {
   const ws = wb.addWorksheet("Unificado", { views: [{ state: "frozen", ySplit: 1 }] });
   ws.columns = [
+    { header: "Marca", key: "marca" },
     { header: "Código", key: "codigo" },
     { header: "Part Number", key: "pn" },
     { header: "Descripción", key: "descripcion" },
-    { header: "Marca", key: "marca" },
     { header: "Condición Anterior", key: "condPrev" },
     { header: "Condición Actual", key: "condCurr" },
     { header: "Precio Anterior", key: "precioPrev" },
     { header: "Precio Actual", key: "precioCurr" },
-    { header: "Diferencia", key: "diferencia" },
-    { header: "Variación %", key: "variacion" },
     { header: "Estado", key: "estado" },
-    { header: "Observación", key: "observacion" },
   ];
   styleHeader(ws.getRow(1));
 
   res.rows.forEach((r) => {
     const row = ws.addRow({
+      marca: r.marca,
       codigo: r.codigo,
       pn: r.partNumber,
       descripcion: r.descripcion,
-      marca: r.marca,
       condPrev: r.condicionPrev,
       condCurr: r.condicionCurr,
       precioPrev: r.precioPrev,
       precioCurr: r.precioCurr,
-      diferencia: r.diferencia,
-      variacion: r.variacionPct != null ? r.variacionPct / 100 : null,
       estado: r.estado,
-      observacion: r.observacion,
     });
     const argb = colorForEstado(r.estado);
     if (argb) {
@@ -104,14 +98,12 @@ function addUnificado(wb: ExcelJS.Workbook, res: ComparisonResult) {
         cell.border = BORDER;
       });
     }
-    // refurbished tint on condicion cells
     if (r.condicionCurr === "REFURBISHED") {
       row.getCell("condCurr").fill = { type: "pattern", pattern: "solid", fgColor: { argb: COLOR_REFURB } };
+      row.getCell("condCurr").font = { bold: true };
     }
     row.getCell("precioPrev").numFmt = '"S/ "#,##0.00;[Red]"S/ -"#,##0.00';
     row.getCell("precioCurr").numFmt = '"S/ "#,##0.00;[Red]"S/ -"#,##0.00';
-    row.getCell("diferencia").numFmt = '"S/ "#,##0.00;[Red]"S/ -"#,##0.00';
-    row.getCell("variacion").numFmt = "0.00%;[Red]-0.00%";
   });
 
   ws.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: ws.columnCount } };

@@ -2,12 +2,18 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
-import { Download, Loader2, Search, Trash2, History as HistoryIcon } from "lucide-react";
+import { Download, Eye, Loader2, Search, Trash2, History as HistoryIcon } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,6 +25,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { ComparisonPreview } from "@/components/ComparisonPreview";
 import { deleteComparacion, getComparacion, listComparaciones } from "@/lib/alcosto/db.functions";
 import { downloadExcel } from "@/lib/alcosto/generate";
 import type { ComparisonResult, ComparedRow, EstadoProducto, Condicion } from "@/lib/alcosto/types";
@@ -35,6 +42,8 @@ function HistorialPage() {
 
   const [q, setQ] = useState("");
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [viewingId, setViewingId] = useState<string | null>(null);
+  const [viewResult, setViewResult] = useState<ComparisonResult | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["historial"],
@@ -61,43 +70,47 @@ function HistorialPage() {
     );
   }, [data, q]);
 
+  const loadResult = async (id: string): Promise<ComparisonResult> => {
+    const { comp, rows } = await get({ data: { id } });
+    return {
+      fechaBase: comp.fecha_base ? new Date(comp.fecha_base) : null,
+      fechaNueva: comp.fecha_nueva ? new Date(comp.fecha_nueva) : null,
+      fileNameBase: comp.nombre_archivo_base ?? "",
+      fileNameNueva: comp.nombre_archivo_nuevo ?? "",
+      outputFileName: comp.nombre_archivo_generado,
+      totalPrev: comp.total_prev,
+      totalCurr: comp.total_curr,
+      agregados: comp.agregados,
+      eliminados: comp.eliminados,
+      cambiosPrecio: comp.cambios_precio,
+      cambiosCondicion: comp.cambios_condicion,
+      refurbished: comp.refurbished,
+      nuevos: comp.nuevos,
+      seMantiene:
+        comp.total_curr - comp.agregados - comp.cambios_precio - comp.cambios_condicion,
+      msProcesamiento: comp.ms_procesamiento,
+      rows: rows.map<ComparedRow>((r) => ({
+        codigo: r.codigo ?? "",
+        partNumber: r.part_number ?? "",
+        descripcion: r.descripcion ?? "",
+        marca: r.marca ?? "",
+        condicionPrev: (r.condicion_prev ?? "") as Condicion,
+        condicionCurr: (r.condicion_curr ?? "") as Condicion,
+        precioPrev: r.precio_prev == null ? null : Number(r.precio_prev),
+        precioCurr: r.precio_curr == null ? null : Number(r.precio_curr),
+        diferencia: r.diferencia == null ? null : Number(r.diferencia),
+        variacionPct: r.variacion_pct == null ? null : Number(r.variacion_pct),
+        estado: r.estado as EstadoProducto,
+        observacion: r.observacion ?? "",
+        orden: r.orden,
+      })),
+    };
+  };
+
   const handleDownload = async (id: string) => {
     setDownloadingId(id);
     try {
-      const { comp, rows } = await get({ data: { id } });
-      const result: ComparisonResult = {
-        fechaBase: comp.fecha_base ? new Date(comp.fecha_base) : null,
-        fechaNueva: comp.fecha_nueva ? new Date(comp.fecha_nueva) : null,
-        fileNameBase: comp.nombre_archivo_base ?? "",
-        fileNameNueva: comp.nombre_archivo_nuevo ?? "",
-        outputFileName: comp.nombre_archivo_generado,
-        totalPrev: comp.total_prev,
-        totalCurr: comp.total_curr,
-        agregados: comp.agregados,
-        eliminados: comp.eliminados,
-        cambiosPrecio: comp.cambios_precio,
-        cambiosCondicion: comp.cambios_condicion,
-        refurbished: comp.refurbished,
-        nuevos: comp.nuevos,
-        seMantiene:
-          comp.total_curr - comp.agregados - comp.cambios_precio - comp.cambios_condicion,
-        msProcesamiento: comp.ms_procesamiento,
-        rows: rows.map<ComparedRow>((r) => ({
-          codigo: r.codigo ?? "",
-          partNumber: r.part_number ?? "",
-          descripcion: r.descripcion ?? "",
-          marca: r.marca ?? "",
-          condicionPrev: (r.condicion_prev ?? "") as Condicion,
-          condicionCurr: (r.condicion_curr ?? "") as Condicion,
-          precioPrev: r.precio_prev == null ? null : Number(r.precio_prev),
-          precioCurr: r.precio_curr == null ? null : Number(r.precio_curr),
-          diferencia: r.diferencia == null ? null : Number(r.diferencia),
-          variacionPct: r.variacion_pct == null ? null : Number(r.variacion_pct),
-          estado: r.estado as EstadoProducto,
-          observacion: r.observacion ?? "",
-          orden: r.orden,
-        })),
-      };
+      const result = await loadResult(id);
       await downloadExcel(result);
     } catch (e) {
       toast.error("Error: " + (e as Error).message);
@@ -105,6 +118,19 @@ function HistorialPage() {
       setDownloadingId(null);
     }
   };
+
+  const handleView = async (id: string) => {
+    setViewingId(id);
+    setViewResult(null);
+    try {
+      const result = await loadResult(id);
+      setViewResult(result);
+    } catch (e) {
+      toast.error("Error: " + (e as Error).message);
+      setViewingId(null);
+    }
+  };
+
 
   return (
     <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-6 p-4 md:p-8">
@@ -171,6 +197,19 @@ function HistorialPage() {
                       <Button
                         size="sm"
                         variant="ghost"
+                        title="Visualizar"
+                        onClick={() => handleView(c.id)}
+                      >
+                        {viewingId === c.id && !viewResult ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Eye className="h-4 w-4 text-primary" />
+                        )}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        title="Descargar"
                         disabled={downloadingId === c.id}
                         onClick={() => handleDownload(c.id)}
                       >
@@ -216,6 +255,33 @@ function HistorialPage() {
           </Table>
         </CardContent>
       </Card>
+
+      <Dialog
+        open={viewingId !== null}
+        onOpenChange={(o) => {
+          if (!o) {
+            setViewingId(null);
+            setViewResult(null);
+          }
+        }}
+      >
+        <DialogContent className="max-w-[95vw] sm:max-w-[95vw] h-[90vh] flex flex-col p-0 gap-0">
+          <DialogHeader className="border-b border-border p-4">
+            <DialogTitle className="text-base">
+              {viewResult ? viewResult.outputFileName : "Cargando comparación…"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="min-h-0 flex-1 overflow-hidden p-4">
+            {viewResult ? (
+              <ComparisonPreview rows={viewResult.rows} />
+            ) : (
+              <div className="flex h-full items-center justify-center">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

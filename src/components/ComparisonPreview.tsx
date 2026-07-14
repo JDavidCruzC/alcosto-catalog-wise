@@ -31,15 +31,19 @@ const estadoPill: Record<EstadoProducto, string> = {
   "CAMBIÓ CONDICIÓN": "status-condicion",
 };
 
-type SortKey = "orden" | "codigo" | "descripcion" | "marca" | "precioCurr" | "variacionPct";
+const rowTint: Record<EstadoProducto, string> = {
+  "SE MANTIENE": "bg-[color-mix(in_oklab,var(--success)_12%,transparent)]",
+  "PRECIO MODIFICADO": "bg-[color-mix(in_oklab,var(--warning)_18%,transparent)]",
+  "NUEVO PRODUCTO": "bg-[color-mix(in_oklab,var(--info)_14%,transparent)]",
+  ELIMINADO: "bg-[color-mix(in_oklab,var(--destructive)_14%,transparent)]",
+  "CAMBIÓ CONDICIÓN": "bg-[color-mix(in_oklab,var(--brand)_14%,transparent)]",
+};
+
+type SortKey = "orden" | "marca" | "codigo" | "descripcion" | "precioCurr" | "estado";
 
 function fmtMoney(n: number | null) {
-  if (n == null) return "—";
+  if (n == null || n === 0) return "—";
   return n.toLocaleString("es-PE", { style: "currency", currency: "PEN", maximumFractionDigits: 2 });
-}
-function fmtPct(n: number | null) {
-  if (n == null) return "—";
-  return `${n > 0 ? "+" : ""}${n.toFixed(2)}%`;
 }
 
 export function ComparisonPreview({ rows }: { rows: ComparedRow[] }) {
@@ -146,49 +150,36 @@ export function ComparisonPreview({ rows }: { rows: ComparedRow[] }) {
         <Table>
           <TableHeader className="sticky top-0 z-10 bg-card">
             <TableRow>
+              <Th k="marca">Marca</Th>
               <Th k="codigo">Código</Th>
               <TableHead>Part Number</TableHead>
               <Th k="descripcion">Descripción</Th>
-              <Th k="marca">Marca</Th>
-              <TableHead>Cond. Prev</TableHead>
-              <TableHead>Cond. Actual</TableHead>
-              <TableHead className="text-right">Precio Prev</TableHead>
+              <TableHead>Condición Anterior</TableHead>
+              <TableHead>Condición Actual</TableHead>
+              <TableHead className="text-right">Precio Anterior</TableHead>
               <Th k="precioCurr" className="text-right">Precio Actual</Th>
-              <TableHead className="text-right">Diferencia</TableHead>
-              <Th k="variacionPct" className="text-right">Var %</Th>
-              <TableHead>Estado</TableHead>
-              <TableHead>Observación</TableHead>
+              <Th k="estado">Estado</Th>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filtered.slice(0, 2000).map((r, i) => (
-              <TableRow key={`${r.codigo}-${r.partNumber}-${i}`}>
+              <TableRow key={`${r.codigo}-${r.partNumber}-${i}`} className={cn(rowTint[r.estado])}>
+                <TableCell className="text-xs font-semibold uppercase">{r.marca || "—"}</TableCell>
                 <TableCell className="font-mono text-xs">{r.codigo}</TableCell>
                 <TableCell className="font-mono text-xs">{r.partNumber}</TableCell>
-                <TableCell className="max-w-[380px] truncate" title={r.descripcion}>
+                <TableCell className="max-w-[420px] truncate" title={r.descripcion}>
                   {r.descripcion}
                 </TableCell>
-                <TableCell className="text-xs font-medium">{r.marca}</TableCell>
-                <TableCell className="text-xs">{r.condicionPrev}</TableCell>
+                <TableCell className="text-xs">{r.condicionPrev || "—"}</TableCell>
                 <TableCell className="text-xs">
                   {r.condicionCurr === "REFURBISHED" ? (
                     <Badge variant="secondary">REFURB</Badge>
                   ) : (
-                    r.condicionCurr
+                    r.condicionCurr || "—"
                   )}
                 </TableCell>
                 <TableCell className="text-right font-mono text-xs">{fmtMoney(r.precioPrev)}</TableCell>
                 <TableCell className="text-right font-mono text-xs">{fmtMoney(r.precioCurr)}</TableCell>
-                <TableCell
-                  className={cn(
-                    "text-right font-mono text-xs",
-                    r.diferencia != null && r.diferencia > 0 && "text-destructive",
-                    r.diferencia != null && r.diferencia < 0 && "text-success",
-                  )}
-                >
-                  {fmtMoney(r.diferencia)}
-                </TableCell>
-                <TableCell className="text-right font-mono text-xs">{fmtPct(r.variacionPct)}</TableCell>
                 <TableCell>
                   <span
                     className={cn(
@@ -199,7 +190,6 @@ export function ComparisonPreview({ rows }: { rows: ComparedRow[] }) {
                     {r.estado}
                   </span>
                 </TableCell>
-                <TableCell className="text-xs text-muted-foreground">{r.observacion}</TableCell>
               </TableRow>
             ))}
           </TableBody>
