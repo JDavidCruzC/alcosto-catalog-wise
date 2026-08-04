@@ -25,6 +25,7 @@ import { Progress } from "@/components/ui/progress";
 import { processFiles } from "@/lib/alcosto/orchestrator";
 import { downloadExcel } from "@/lib/alcosto/generate";
 import { saveComparacion } from "@/lib/alcosto/db.functions";
+import { AI_ENGINE_VERSION, AI_MODEL_LABEL } from "@/lib/alcosto/ai-config";
 import type { ComparisonResult } from "@/lib/alcosto/types";
 import {
   Tabs,
@@ -119,9 +120,14 @@ function ComparadorPage() {
     <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-6 p-4 md:p-8">
       {/* Hero */}
       <div className="flex flex-col items-start gap-2">
-        <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
-          <Sparkles className="h-3.5 w-3.5 text-brand" />
-          Sistema inteligente de comparación · Detección de marcas con IA
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
+            <Sparkles className="h-3.5 w-3.5 text-brand" />
+            Sistema inteligente de comparación · Detección de marcas con IA
+          </div>
+          <div className="inline-flex items-center gap-2 rounded-full border border-brand/30 bg-brand/10 px-3 py-1 text-xs font-medium text-brand">
+            Motor IA: {AI_MODEL_LABEL} · {AI_ENGINE_VERSION}
+          </div>
         </div>
         <h1 className="text-3xl font-bold tracking-tight md:text-4xl">
           Comparador ALCOSTO
