@@ -1,72 +1,34 @@
 import { parseAlcostoFile } from "./parse";
 import { compareFiles } from "./compare";
 import { detectBrandsFromImages } from "./ai.functions";
+import { canonicalBrand } from "./ai-config";
 import type { ComparisonResult, ParsedFile } from "./types";
 
-/** Guess a brand from description if no image is present. */
-function guessBrandFromDesc(desc: string): string {
-  const KNOWN = [
-    "APPLE",
-    "SAMSUNG",
-    "HP",
-    "DELL",
-    "LENOVO",
-    "LG",
-    "SONY",
-    "XIAOMI",
-    "HUAWEI",
-    "ACER",
-    "ASUS",
-    "MSI",
-    "MOTOROLA",
-    "OPPO",
-    "NOKIA",
-    "PANASONIC",
-    "PHILIPS",
-    "EPSON",
-    "CANON",
-    "LOGITECH",
-    "MICROSOFT",
-    "GOOGLE",
-    "TCL",
-    "HISENSE",
-    "MIRAY",
-    "ONEPLUS",
-    "REDMI",
-    "HONOR",
-    "REALME",
-    "JBL",
-    "BOSE",
-  ];
-  const u = desc.toUpperCase();
-  for (const b of KNOWN) if (u.includes(b)) return b;
-  return "";
-}
-
-/** Enrich rows with brand: use existing marca col > known-from-desc > AI on image */
+/** Enrich rows with brand: use existing marca col > AI on logo image > text heuristic */
 async function enrichBrands(file: ParsedFile): Promise<void> {
   const missing = file.rows.filter((r) => !r.marca && r.imageBase64 && r.imageHash);
   const byHash = new Map<string, string>();
-  const uniqueItems: { hash: string; base64: string }[] = [];
+  const uniqueItems: { hash: string; base64: string; descripcion: string }[] = [];
   for (const r of missing) {
     if (!r.imageHash || !r.imageBase64) continue;
     if (!byHash.has(r.imageHash)) {
       byHash.set(r.imageHash, "");
-      uniqueItems.push({ hash: r.imageHash, base64: r.imageBase64 });
+      uniqueItems.push({ hash: r.imageHash, base64: r.imageBase64, descripcion: r.descripcion });
     }
   }
   if (uniqueItems.length > 0) {
     try {
       const { brands } = await detectBrandsFromImages({ data: { items: uniqueItems } });
-      for (const [h, m] of Object.entries(brands)) byHash.set(h, m);
+      for (const [h, m] of Object.entries(brands)) byHash.set(h, canonicalBrand(m));
     } catch (err) {
       console.error("[brand] AI failed", err);
     }
   }
   for (const r of file.rows) {
+    if (r.marca) r.marca = canonicalBrand(r.marca) || r.marca;
     if (!r.marca) {
       if (r.imageHash && byHash.get(r.imageHash)) r.marca = byHash.get(r.imageHash) ?? "";
-      if (!r.marca) r.marca = guessBrandFromDesc(r.descripcion);
+      if (!r.marca) r.marca = canonicalBrand(r.descripcion);
     }
     // strip image payload after use
     r.imageBase64 = undefined;
