@@ -15,6 +15,7 @@ import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/s
 import { AppSidebar } from "@/components/AppSidebar";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import { Toaster } from "@/components/ui/sonner";
+import { Watermark } from "@/components/Watermark";
 
 function NotFoundComponent() {
   return (
@@ -140,6 +141,7 @@ function RootComponent() {
             <main className="flex-1">
               <Outlet />
             </main>
+            <Watermark />
           </SidebarInset>
         </div>
         <Toaster richColors position="top-right" />
