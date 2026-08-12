@@ -151,6 +151,38 @@ export type Database = {
           },
         ]
       }
+      uso_eventos: {
+        Row: {
+          comparacion_id: string | null
+          created_at: string
+          detalle: string | null
+          id: number
+          tipo: string
+        }
+        Insert: {
+          comparacion_id?: string | null
+          created_at?: string
+          detalle?: string | null
+          id?: number
+          tipo: string
+        }
+        Update: {
+          comparacion_id?: string | null
+          created_at?: string
+          detalle?: string | null
+          id?: number
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "uso_eventos_comparacion_id_fkey"
+            columns: ["comparacion_id"]
+            isOneToOne: false
+            referencedRelation: "comparaciones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
