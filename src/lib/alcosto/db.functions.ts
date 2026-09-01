@@ -132,3 +132,46 @@ export const deleteComparacion = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+const UsoSchema = z.object({
+  tipo: z.enum(["comparacion", "descarga"]),
+  comparacionId: z.string().uuid().nullable().optional(),
+  detalle: z.string().max(300).optional(),
+});
+
+export const registrarUso = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => UsoSchema.parse(d))
+  .handler(async ({ data }) => {
+    const sb = serverClient();
+    const { error } = await sb.from("uso_eventos").insert({
+      tipo: data.tipo,
+      comparacion_id: data.comparacionId ?? null,
+      detalle: data.detalle ?? null,
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const getUsoStats = createServerFn({ method: "GET" }).handler(async () => {
+  const sb = serverClient();
+  const comparaciones = await sb
+    .from("uso_eventos")
+    .select("id", { count: "exact", head: true })
+    .eq("tipo", "comparacion");
+  const descargas = await sb
+    .from("uso_eventos")
+    .select("id", { count: "exact", head: true })
+    .eq("tipo", "descarga");
+  const ultimo = await sb
+    .from("uso_eventos")
+    .select("created_at")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  return {
+    comparaciones: comparaciones.count ?? 0,
+    descargas: descargas.count ?? 0,
+    total: (comparaciones.count ?? 0) + (descargas.count ?? 0),
+    ultimoUso: ultimo.data?.created_at ?? null,
+  };
+});
