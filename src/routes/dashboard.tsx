@@ -25,6 +25,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatCard } from "@/components/StatCard";
 import { listComparaciones } from "@/lib/alcosto/db.functions";
+import { UsageCounter } from "@/components/UsageCounter";
 
 export const Route = createFileRoute("/dashboard")({
   component: DashboardPage,
@@ -74,6 +75,9 @@ function DashboardPage() {
           <p className="text-sm text-muted-foreground">
             Métricas agregadas sobre todas las comparaciones realizadas.
           </p>
+        </div>
+        <div className="ml-auto hidden md:block">
+          <UsageCounter />
         </div>
       </div>
 
