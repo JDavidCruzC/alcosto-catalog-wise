@@ -1,5 +1,6 @@
 import ExcelJS from "exceljs";
-import { saveAs } from "file-saver";
+import fileSaver from "file-saver";
+const { saveAs } = fileSaver;
 import type { ComparisonResult, ComparedRow } from "./types";
 
 const HEADER_FILL: ExcelJS.FillPattern = {
