@@ -26,7 +26,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { ComparisonPreview } from "@/components/ComparisonPreview";
-import { deleteComparacion, getComparacion, listComparaciones } from "@/lib/alcosto/db.functions";
+import { deleteComparacion, getComparacion, listComparaciones, registrarUso } from "@/lib/alcosto/db.functions";
 import { downloadExcel } from "@/lib/alcosto/generate";
 import type { ComparisonResult, ComparedRow, EstadoProducto, Condicion } from "@/lib/alcosto/types";
 
@@ -112,6 +112,7 @@ function HistorialPage() {
     try {
       const result = await loadResult(id);
       await downloadExcel(result);
+      await registrarUso({ data: { tipo: "descarga", comparacionId: id } }).catch(() => {});
     } catch (e) {
       toast.error("Error: " + (e as Error).message);
     } finally {

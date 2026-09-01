@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import {
@@ -24,7 +25,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { processFiles } from "@/lib/alcosto/orchestrator";
 import { downloadExcel } from "@/lib/alcosto/generate";
-import { saveComparacion } from "@/lib/alcosto/db.functions";
+import { saveComparacion, registrarUso } from "@/lib/alcosto/db.functions";
+import { UsageCounter } from "@/components/UsageCounter";
 import { AI_ENGINE_VERSION, AI_MODEL_LABEL } from "@/lib/alcosto/ai-config";
 import type { ComparisonResult } from "@/lib/alcosto/types";
 import {
@@ -50,6 +52,7 @@ function ComparadorPage() {
   const [progress, setProgress] = useState(0);
   const [results, setResults] = useState<ComparisonResult[]>([]);
   const [activeIdx, setActiveIdx] = useState(0);
+  const queryClient = useQueryClient();
 
   const active = results[activeIdx];
 
@@ -91,11 +94,22 @@ function ComparadorPage() {
               msProcesamiento: res.msProcesamiento,
               rows: res.rows,
             },
-          }).catch((e) => {
-            console.error("save error", e);
-          }),
+          })
+            .then((r) =>
+              registrarUso({
+                data: {
+                  tipo: "comparacion",
+                  comparacionId: r?.id ?? null,
+                  detalle: res.outputFileName,
+                },
+              }),
+            )
+            .catch((e) => {
+              console.error("save error", e);
+            }),
         ),
       );
+      queryClient.invalidateQueries({ queryKey: ["uso-stats"] });
       setResults(out);
       setActiveIdx(0);
       setProgress(100);
@@ -128,6 +142,7 @@ function ComparadorPage() {
           <div className="inline-flex items-center gap-2 rounded-full border border-brand/30 bg-brand/10 px-3 py-1 text-xs font-medium text-brand">
             Motor IA: {AI_MODEL_LABEL} · {AI_ENGINE_VERSION}
           </div>
+          <UsageCounter />
         </div>
         <h1 className="text-3xl font-bold tracking-tight md:text-4xl">
           Comparador ALCOSTO
@@ -236,7 +251,14 @@ function ComparadorPage() {
                 <Button variant="secondary" onClick={reset}>
                   Nueva comparación
                 </Button>
-                <Button onClick={() => downloadExcel(active)} size="lg">
+                <Button onClick={async () => {
+                    await downloadExcel(active);
+                    registrarUso({
+                      data: { tipo: "descarga", detalle: active.outputFileName },
+                    })
+                      .then(() => queryClient.invalidateQueries({ queryKey: ["uso-stats"] }))
+                      .catch(() => {});
+                  }} size="lg">
                   <Download className="mr-2 h-4 w-4" />
                   Descargar Excel
                 </Button>
